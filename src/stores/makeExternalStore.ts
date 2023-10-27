@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { ExternalStore } from "./ExternalStore";
+import { ExternalStoreAsync } from "./ExternalStoreAsync";
 
-type MakeExternalStore<T, S extends typeof ExternalStore<T>> = {
+type MakeExternalStore<S extends typeof ExternalStore<T>, T = unknown> = {
   store: InstanceType<S>;
   reset: () => void;
   useValue: () => InstanceType<S>['value'];
@@ -32,13 +33,13 @@ type MakeExternalStore<T, S extends typeof ExternalStore<T>> = {
  *   return <>{result.map(...)}</>
  * }
  */
-export function makeExternalStore<T extends unknown, S extends typeof ExternalStore<T>>(
+export function makeExternalStore<S extends typeof ExternalStore<T>, T>(
   Store: S,
-  initializer: T | undefined = undefined,
-): MakeExternalStore<T, S> {
-  const store = new Store(initializer);
+  ...params: ConstructorParameters<S>
+): MakeExternalStore<S, T> {
+  const store = new Store(...params);
   const reset = () => {
-    store.set.bind(store)(initializer);
+    store.set.bind(store)(...params);
   };
   const useValue = () => useSyncExternalStore(
     store.subscribe.bind(store),

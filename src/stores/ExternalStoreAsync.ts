@@ -1,4 +1,4 @@
-import { memoize } from "../utils/memoize";
+import { memoize, Memoize } from "../utils/memoize";
 import { ExternalStore } from "./ExternalStore";
 
 /**
@@ -14,16 +14,24 @@ import { ExternalStore } from "./ExternalStore";
  * userStore.get(1).then(user => ...)
  */
 export class ExternalStoreAsync<T> extends ExternalStore<T> {
-  declare readonly promise: (...args: any[]) => Promise<T>;
   error?: Error;
+  declare readonly promise: (...args: any[]) => Promise<T>;
+  declare get: Memoize<(...args: Parameters<typeof this['promise']>) => Promise<T>>
 
-  get get() {
-    return memoize(
+  constructor(initialValue?: T | undefined, promise?: (...args: any[]) => Promise<T>) {
+    super(initialValue);
+    this.promise = this.promise || promise;
+    this.get = memoize(
       (
         ...args: Parameters<typeof this['promise']>
       ) => this.promise(...args)
         .then(this.set.bind(this))
-        .then(() => this.value)
-    );
+        .then(() => this.value as T)
+      );
+  }
+
+  reset(...params: Parameters<typeof this['promise']>) {
+    super.reset();
+    this.get.reset(...params);
   }
 }
