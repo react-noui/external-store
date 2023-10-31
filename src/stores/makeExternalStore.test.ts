@@ -31,7 +31,8 @@ describe('makeExternalStore', () => {
   });
 
   test('external store specifications with initialValue', () => {
-    const inputStore = makeExternalStore(ExternalStore<string>, '');
+    class StringStore extends ExternalStore<string> {};
+    const inputStore = makeExternalStore(StringStore, '');
 
     const { result } = renderHook(() => inputStore.useValue());
 
@@ -64,8 +65,12 @@ describe('makeExternalStore', () => {
     const fetchTodos = (): Promise<Todo[]> =>
       fetch('https://jsonplaceholder.typicode.com/todos')
         .then((res) => res.json());
+    
+    class TodosStore extends ExternalStoreAsync<Todo[]> {
+      promise = fetchTodos;
+    }
 
-    const todosStore = makeExternalStore(ExternalStoreAsync<Todo[]>, undefined, fetchTodos);
+    const todosStore = makeExternalStore(TodosStore);
 
     const { result } = renderHook(() => todosStore.useValue());
     expect(result.current).toBeUndefined();
@@ -92,8 +97,12 @@ describe('makeExternalStore', () => {
     const fetchTodos = (): Promise<Todo[]> =>
       fetch('https://jsonplaceholder.typicode.com/todos')
         .then((res) => res.json());
+  
+    class TodosStore extends ExternalStoreAsync<Todo[]> {
+      promise = fetchTodos;
+    }
 
-    const todosStore = makeExternalStore(ExternalStoreAsync<Todo[]>, [], fetchTodos);
+    const todosStore = makeExternalStore(TodosStore, []);
 
     const { result } = renderHook(() => todosStore.useValue());
     expect(result.current).toEqual([]);
@@ -121,7 +130,11 @@ describe('makeExternalStore', () => {
       fetch(`https://jsonplaceholder.typicode.com/users/${userId}`)
         .then(res => (res.json() as Promise<User>));
 
-    const userStore = makeExternalStore(ExternalStoreAsync<User>, undefined, fetchUser);
+    class UserStore extends ExternalStoreAsync<User> {
+      promise = fetchUser;
+    }
+
+    const userStore = makeExternalStore(UserStore);
 
     const { result } = renderHook(() => userStore.useValue());
     expect(result.current).toBeUndefined();

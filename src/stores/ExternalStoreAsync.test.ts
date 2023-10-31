@@ -13,9 +13,9 @@ const MOCK_TODOS: Todo[] = [
   { id: 2, userId: 1, title: 'Todo 2', completed: false },
 ];
 
-const fetchUser = jest.fn((userId: number): Promise<User> =>
+const fetchUser = (userId: number): Promise<User> =>
   fetch(`${BASE_URL}/users/${userId}`)
-    .then(res => res.json()));
+    .then(res => res.json());
 
 const fetchUserTodos = jest.fn((userId: number): Promise<Todo[]> =>
   fetch(`${BASE_URL}/users/${userId}/todos`)
@@ -27,7 +27,6 @@ class UserStore extends ExternalStoreAsync<User> {
 class UserTodosStore extends ExternalStoreAsync<Todo[]> {
   promise = fetchUserTodos;
 }
-    
 
 describe('ExternalStoreFetch', () => {
   test('constructor with memoized get', async () => {    

@@ -18,9 +18,8 @@ export class ExternalStoreAsync<T> extends ExternalStore<T> {
   declare readonly promise: (...args: any[]) => Promise<T>;
   declare get: Memoize<(...args: Parameters<typeof this['promise']>) => Promise<T>>
 
-  constructor(initialValue?: T | undefined, promise?: (...args: any[]) => Promise<T>) {
+  constructor(initialValue?: T | undefined) {
     super(initialValue);
-    this.promise = this.promise || promise;
     this.get = memoize(
       (
         ...args: Parameters<typeof this['promise']>
