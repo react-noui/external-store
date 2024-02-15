@@ -1,8 +1,8 @@
-import { isObject } from './isObject'
+import { isRecord } from '../isRecord'
 
 class TestClass {};
 
-describe('isObject', () => {
+describe('isRecord', () => {
   test.each([
     {
       value: '',
@@ -25,6 +25,6 @@ describe('isObject', () => {
       expected: true,
     },
   ])('should handle $value', ({ value, expected }) => {
-    expect(isObject(value)).toBe(expected);
+    expect(isRecord(value)).toBe(expected);
   });
 });

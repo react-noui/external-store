@@ -17,7 +17,7 @@ export function memoize<
   method: T,
   memoKey: MemoKey<T> = defaultMemoKey,
 ) {
-  const memos = new Map<string, ReturnType<T>>()
+  const memos = new Map<string, ReturnType<T>>();
   return Object.assign(
     (...args: Parameters<T>) => {
       const key = memoKey(...args);

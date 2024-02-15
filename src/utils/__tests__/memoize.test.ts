@@ -1,4 +1,4 @@
-import { memoize } from './memoize';
+import { memoize } from '../memoize';
 
 describe('memoize', () => {
   test('only calls memoized method once per argument combination', async () => {

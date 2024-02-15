@@ -1,14 +1,12 @@
-import { isObject } from "../utils/isObject";
-
 /**
  * @constructor (initialValue?: T)
  */
 export class ExternalStore<T> {
-  declare value: T | undefined;
-  declare initialValue: T | undefined;
+  declare value: T;
+  declare initialValue: T;
   listeners: (() => void)[] = [];
 
-  constructor(initialValue: T | undefined = undefined) {
+  constructor(initialValue: T) {
     this.value = this.initialValue = initialValue;
   }
 
@@ -19,28 +17,17 @@ export class ExternalStore<T> {
     }
   }
 
-  getSnapshot(): T | undefined {
+  getSnapshot(): T {
     return this.value;
   }
 
-  set(value: T | undefined = undefined): void {
+  setValue(value: T): void {
     this.value = value;
     this.emitChange();
   }
 
-  spread(value: Partial<T> | undefined = undefined): void {
-    if (isObject(this.value) && isObject(value)) {
-      this.set({ ...this.value, ...value });
-    }
-  }
-
   reset() {
-    this.set(this.initialValue);
-  }
-
-  clear() {
-    this.value = undefined;
-    this.emitChange();
+    this.setValue(this.initialValue);
   }
 
   emitChange(): void {
