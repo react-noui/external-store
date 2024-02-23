@@ -3,5 +3,5 @@ import { syncExternalStore } from "./syncExternalStore";
 
 export function makeExternalStoreRegExp(...args: ConstructorParameters<typeof RegExp>) {
   const store = new ExternalStoreRegExp(...args);
-  return syncExternalStore<typeof store, RegExp>(store);
+  return syncExternalStore(store);
 }

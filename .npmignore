@@ -1,0 +1,11 @@
+src/
+coverage/
+
+.gitignore
+.nvmrc
+babel.config.json
+jest.config.js
+jest.setup.js
+tsconfig.*
+
+*.tgz

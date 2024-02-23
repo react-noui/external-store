@@ -113,7 +113,7 @@ myAsyncStore.get().then(console.log);
 
 Using the JSON placeholder API, we can quickly grab some async HTTP data.
 
-```typescript
+```tsx
 // stores/todosStore.ts
 type Todo = {
   id: number;
@@ -121,23 +121,22 @@ type Todo = {
   userId: number;
   completed: boolean;
 };
-const fetchTodos = (): Promise<Todo[]> =>
-  fetch('https://jsonplaceholder.typicode.com/todos')
+const fetchTodo = (id: number): Promise<Todo> =>
+  fetch(`https://jsonplaceholder.typicode.com/todos/${id}`)
     .then((res) => res.json());
 
-class TodosStore extends ExternalStoreAsync<Todo[]> {
-  promise = fetchTodos;
+export const todosStore = makeExternalStoreAsync(fetchTodo);
+
+// ...later in your components...
+function TodoComponent({ id }: { id: number }) {
+  const todo = todosStore.useValue(id); // Promise<Todo[]>
+  // ...
 }
-
-export const todosStore = makeExternalStore(TodosStore);
-
-// ...later when you want to make the request...
-await todosStore.get(); // Promise<Todo[]>
 ```
 
 Parameters are also supported when requests need them.
 
-```typescript
+```tsx
 // stores/userStore.ts
 type User = {
   id: number;

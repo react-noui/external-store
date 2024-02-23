@@ -1,10 +1,10 @@
 import { ExternalStoreSet } from "../stores/ExternalStoreSet";
 import { syncExternalStore } from "./syncExternalStore";
 
-export function makeExternalStoreSet<T>(arg: Set<T>) {
+export function makeExternalStoreSet<T>(arg: Set<T> = new Set()) {
   const store = new ExternalStoreSet<T>(arg);
   return {
-    ...syncExternalStore<typeof store, Set<T>>(store),
+    ...syncExternalStore(store),
     add: store.add,
     clear: store.clear,
     delete: store.delete,

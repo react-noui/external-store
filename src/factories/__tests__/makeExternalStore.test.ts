@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import { act, renderHook } from "@testing-library/react-hooks";
 import { ExternalStoreBoolean } from "../../stores/ExternalStoreBoolean";
 import { ExternalStoreNumber } from "../../stores/ExternalStoreNumber";
@@ -5,6 +8,7 @@ import { ExternalStoreRecord } from "../../stores/ExternalStoreRecord";
 import { ExternalStoreString } from "../../stores/ExternalStoreString";
 import { makeExternalStore } from "../makeExternalStore";
 import { ExternalStoreArray } from "../../stores/ExternalStoreArray";
+import { ExternalStoreRegExp } from "../../stores/ExternalStoreRegExp";
 
 describe("makeExternalStore", () => {
   test("makeExternalStore(boolean)", () => {
@@ -14,7 +18,7 @@ describe("makeExternalStore", () => {
     const { result } = renderHook(() => S.useValue());
     expect(result.current).toEqual(false);
     act(() => {
-      S.store.setValue(true);
+      S.setValue(true);
     });
     expect(result.current).toEqual(true);
     act(() => {
@@ -37,7 +41,7 @@ describe("makeExternalStore", () => {
     const { result } = renderHook(() => S.useValue());
     expect(result.current).toEqual(0);
     act(() => {
-      S.store.setValue(1);
+      S.setValue(1);
     });
     expect(result.current).toEqual(1);
     act(() => {
@@ -59,14 +63,25 @@ describe("makeExternalStore", () => {
   });
   test("makeExternalStore(string)", () => {
     const S = makeExternalStore("");
-    expect(S.store instanceof ExternalStoreString).toBeTruthy();
+    expect(S.store).toBeInstanceOf(ExternalStoreString);
     expect(S.getValue()).toEqual("");
     const { result } = renderHook(() => S.useValue());
     expect(result.current).toEqual("");
     act(() => {
-      S.store.setValue("TEST");
+      S.setValue("TEST");
     });
     expect(result.current).toEqual("TEST");
+  });
+  test("makeExternalStore(RegExp)", () => {
+    const S = makeExternalStore(new RegExp(""));
+    expect(S.store).toBeInstanceOf(ExternalStoreRegExp);
+    expect(S.getValue()).toEqual(/(?:)/);
+    const { result } = renderHook(() => S.useValue());
+    expect(result.current).toEqual(/(?:)/);
+    act(() => {
+      S.setValue("TEST");
+    });
+    expect(result.current).toEqual(/TEST/);
   });
   test("makeExternalStore(Record)", () => {
     const S = makeExternalStore({ a: 0, b: "", c: false });
@@ -75,7 +90,7 @@ describe("makeExternalStore", () => {
     const { result } = renderHook(() => S.useValue());
     expect(result.current).toMatchObject({ a: 0, b: "", c: false });
     act(() => {
-      S.store.setValue({ a: 1, b: "TEST", c: true });
+      S.setValue({ a: 1, b: "TEST", c: true });
     });
     expect(result.current).toMatchObject({ a: 1, b: "TEST", c: true });
     act(() => {
@@ -90,7 +105,7 @@ describe("makeExternalStore", () => {
     const { result } = renderHook(() => S.useValue());
     expect(result.current).toEqual(["a", "b"]);
     act(() => {
-      S.store.setValue(["c", "d"]);
+      S.setValue(["c", "d"]);
     });
     expect(result.current).toEqual(["c", "d"]);
     act(() => {
@@ -138,31 +153,32 @@ describe("makeExternalStore", () => {
     expect(Array.from(S.getValue())).toEqual([]);
     const { result } = renderHook(() => S.useValue());
     act(() => {
-      S.store.add(1);
-      S.store.add(2);
+      S.add(1);
+      S.add(2);
     });
     expect(Array.from(result.current)).toEqual([1, 2]);
     expect(Array.from(S.getValue())).toEqual([1, 2]);
 
     act(() => {
-      S.store.delete(1);
+      S.delete(1);
     });
     expect(Array.from(result.current)).toEqual([2]);
     expect(Array.from(S.getValue())).toEqual([2]);
 
     act(() => {
-      S.store.clear();
+      S.clear();
     });
     expect(Array.from(result.current)).toEqual([]);
     expect(Array.from(S.getValue())).toEqual([]);
   });
-  test("makeExternalStore(Storage)", () => {
-    expect(true).toEqual(true);
-  });
-  test("makeExternalStore<CustomEvent>()", () => {
-    expect(true).toEqual(true);
-  });
-  test("makeExternalStore(Async)", () => {
-    expect(true).toEqual(true);
+  test("makeExternalStore(Basic)", () => {
+    const S = makeExternalStore(10n);
+    expect(Number(S.store.value)).toEqual(10);
+    const { result } = renderHook(() => S.useValue());
+    expect(result.current).toEqual(10n);
+    act(() => {
+      S.setValue(0n);
+    });
+    expect(result.current).toEqual(0n);
   });
 });

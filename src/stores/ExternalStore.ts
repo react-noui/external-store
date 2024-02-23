@@ -26,7 +26,7 @@ export class ExternalStore<T> {
     this.emitChange();
   }
 
-  reset() {
+  reset(...args: any[]) {
     this.setValue(this.initialValue);
   }
 

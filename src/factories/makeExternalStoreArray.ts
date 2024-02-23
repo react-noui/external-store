@@ -4,7 +4,7 @@ import { syncExternalStore } from "./syncExternalStore";
 export function makeExternalStoreArray<T>(arg: T[]) {
   const store = new ExternalStoreArray<T>(arg);
   return {
-    ...syncExternalStore<typeof store, T[]>(store),
+    ...syncExternalStore(store),
     push: store.push,
     pop: store.pop,
     shift: store.shift,

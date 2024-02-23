@@ -1,9 +1,6 @@
-import { memoize, Memoize } from "../utils/memoize";
+import { AsyncReturnType, Memoize, memoize } from "../utils/memoize";
 import { ExternalStore } from "./ExternalStore";
-import { ExternalStoreRecord } from "./ExternalStoreRecord";
-
-export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
-  T extends (...args: any) => Promise<infer R> ? R : any
+import { ExternalStoreMap } from "./ExternalStoreMap";
 
 /**
  * ExternalStore<T> with a promise interface.
@@ -12,41 +9,51 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
  *   return fetch(...).then(res => res.json())
  * }
  * const userStore = new ExternalStoreAsync(fetchUser);
- * userStore.get(1).then(user => ...)
+ * const user = await userStore.call(1);
  */
 export class ExternalStoreAsync<
   P extends (...args: any[]) => Promise<any>,
   T = AsyncReturnType<P>
-> extends ExternalStoreRecord<Record<string, AsyncReturnType<P>>> {
-  declare serializeParams: (...args: Parameters<P>) => string;
-  declare private promise: P;
-  declare private call: Memoize<(...args: Parameters<P>) => Promise<T>>
-  private paramsListeners: Record<string, (() => void)[]> = {};
+> extends ExternalStore<undefined> {
+  declare key: (value: T) => string | number;
+  declare promise: Memoize<P>;
+  private listenersParams: Record<string, (() => void)[]> = {};
 
   constructor(promise: P) {
-    super({});
-    this.promise = promise;
-    this.call = memoize((...args: Parameters<P>) =>
-      this.promise(...args).then(this.setValue.bind(this)));
+    super(undefined);
+    this.promise = memoize(promise, this.argsKey);
   }
 
-  subscribeParams(...args: Parameters<P>) {
-    const key = JSON.stringify(args);
+  argsKey = (...args: Parameters<P>) => JSON.stringify(args);
+
+  getValue = (...args: Parameters<P>) => {
+    return this.getSnapshotParams(...args);
+  }
+
+  call = async (...args: Parameters<P>) => {
+    await this.promise(...args);
+    this.emitChangeParams(this.argsKey(...args));
+  }
+
+  subscribeParams = (...args: Parameters<P>) => {
+    const key = this.argsKey(...args);
     return (listener: () => void) => {
-      this.paramsListeners[key] = [...this.paramsListeners[key] ?? [], listener];
+      this.listenersParams[key] = [...this.listenersParams[key] ?? [], listener];
       return () => {
-        this.paramsListeners[key] = this.paramsListeners[key].filter((l) => l !== listener);
+        this.listenersParams[key] = this.listenersParams[key].filter((l) => l !== listener);
       };
     };
   }
 
-  getSnapshotParams(...args: Parameters<P>) {
-    const key = this.serializeParams(...args);
-    return () => this.value[key];
+  getSnapshotParams = (...args: Parameters<P>) => this.promise.cache.get(...args);
+
+  emitChangeParams(key: string) {
+    (this.listenersParams[key] ?? []).forEach((listen) => listen());
   }
 
-  reset(...params: Parameters<P>) {
-    super.reset();
-    this.call.reset(...params);
+  reset = (...args: Parameters<P>) => {
+    this.promise.cache.delete(...args);
+    const key = this.argsKey(...args);
+    this.emitChangeParams(key);
   }
 }

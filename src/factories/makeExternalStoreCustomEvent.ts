@@ -1,26 +1,7 @@
-import { useSyncExternalStore } from "react";
 import { syncExternalStore } from "./syncExternalStore";
-import {
-  ExternalStoreCustomEvent,
-  TExternalStoreCustomEvent,
-  TExternalStoreCustomEventMap
-} from "../stores/ExternalStoreCustomEvent";
+import { ExternalStoreCustomEvent } from "../stores/ExternalStoreCustomEvent";
 
-export function makeExternalStoreCustomEvent<
-T extends TExternalStoreCustomEvent,
-TMap = TExternalStoreCustomEventMap<T>,
->() {
-const store = new ExternalStoreCustomEvent<T, TMap>();
-const s = syncExternalStore<typeof store, Partial<Record<keyof TMap, TMap[keyof TMap]>>>(store);
-const useEvent = (name: keyof TMap) => {
-  s.useValue();
-  return useSyncExternalStore(
-    store.subscribeEvent(name).bind(store),
-    store.getSnapshotEvent(name).bind(store),
-  )
-};
-return {
-  ...syncExternalStore(store),
-  useEvent,
-}
+export function makeExternalStoreCustomEvent<T>(...args: ConstructorParameters<typeof ExternalStoreCustomEvent<T>>) {
+  const store = new ExternalStoreCustomEvent<T>(...args);
+  return syncExternalStore(store);
 }

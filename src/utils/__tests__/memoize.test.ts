@@ -1,4 +1,5 @@
 import { memoize } from '../memoize';
+import { makeResolver } from "../makeResolver.test.helper";
 
 describe('memoize', () => {
   test('only calls memoized method once per argument combination', async () => {
@@ -19,8 +20,30 @@ describe('memoize', () => {
     expect(method).toHaveBeenCalledTimes(1);
 
     // Reset to receall method.
-    memoizedMethod.reset(1);
+    memoizedMethod.cache.delete(1);
     memoizedMethod(1);
     expect(method).toHaveBeenCalledTimes(2);
+  });
+
+  test("returns the promise if it is still awaiting", async () => {
+    const [P, resolve] = makeResolver<number>();
+    const method = jest.fn((_arg: string) => P);
+    const memoizedMethod = memoize(method);
+    
+    const value = memoizedMethod("foo");
+    const value2 = memoizedMethod("foo");
+
+    expect(memoizedMethod.cache.isAwaiting("foo")).toBeTruthy();
+    expect(memoizedMethod.cache.get("foo")).toBeUndefined();
+    
+    resolve(1);
+    await Promise.all([value, value2]);
+
+    expect(value).resolves.toEqual(1);
+    expect(value2).resolves.toEqual(1);
+
+    expect(memoizedMethod.cache.isAwaiting("foo")).toBeFalsy();
+    expect(memoizedMethod.cache.get("foo")).toEqual(1);
+    expect(method).toHaveBeenCalledTimes(1);
   });
 });

@@ -25,4 +25,10 @@ export class ExternalStoreArray<T> extends ExternalStore<T[]> {
     this.setValue(nextValue);
     return ret;
   };
+  splice = (...args: Parameters<Array<T>["splice"]>) => {
+    const nextValue = [...this.value];
+    const ret = nextValue.splice(...args);
+    this.setValue(nextValue);
+    return ret;
+  };
 }

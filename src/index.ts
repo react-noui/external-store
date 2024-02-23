@@ -1,2 +1,2 @@
-export * from './factories/makeExternalStore';
+export * from './factories';
 export * from './stores';

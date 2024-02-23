@@ -1,26 +1,47 @@
+import { SerializeUpDown } from '../utils/serializer';
 import { ExternalStore } from './ExternalStore';
 
-export type SerializeUpDown<T> = {
-  up: (value: T | undefined) => string;
-  down: (value: string) => T;
-};
-
-function setStorage<T>(serializeUp: SerializeUpDown<T>['up']) {
-  return (storage: Storage, key: string | Symbol, value?: T) => {
-    storage.setItem(String(key), serializeUp(value));
+function setStorage<T>(serialize: SerializeUpDown<T>) {
+  return (storage: Storage, key: string | Symbol, value: T) => {
+    storage.setItem(String(key), serialize.up(value));
   }
 }
 
-function getStorage<T>(serializeDown: SerializeUpDown<T>['down']) {
+function getStorage<T>(serialize: SerializeUpDown<T>, initialValue: T) {
   return (storage: Storage, key: string | Symbol) => {
     const value = storage.getItem(String(key));
     if (value) {
-      return serializeDown(value) as T;
+      try {
+        return serialize.down(value) as T;
+      } catch (_error) {
+        console.error("OOPSIES", _error);
+      }
     }
+    return initialValue;
   }
 }
 
-const alreadyEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+function getStorageInit<T>(
+  storage: Storage,
+  key: string | Symbol,
+  initialValue: T,
+  serialize: SerializeUpDown<T>
+) {
+  const value = storage.getItem(String(key));
+  if (value) {
+    try {
+      return serialize.down(value);
+    } catch (error) {
+      console.error("OOPSIES");
+      return initialValue;
+    }
+  } else {
+    storage.setItem(String(key), serialize.up(initialValue));
+  }
+  return initialValue;
+}
+
+// const alreadyEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
 export class ExternalStoreStorage<T> extends ExternalStore<T | undefined> {
   declare readonly key: string | Symbol;
@@ -34,43 +55,41 @@ export class ExternalStoreStorage<T> extends ExternalStore<T | undefined> {
     key: string | Symbol,
     initialValue: T,
     serialize: SerializeUpDown<T> = {
-      up: JSON.stringify,
-      down: JSON.parse,
+      up: x => `${x ?? ""}`,
+      down: x => x as T,
     },
   ) {
-    const value = getStorage<T>(serialize.down)(storage, key);
-    super(value || initialValue);
+    const value = getStorageInit(storage, key, initialValue, serialize);
+    super(value);
     this.storage = storage;
     this.key = key;
-    this.setStorage = setStorage(serialize.up);
-    this.getStorage = getStorage(serialize.down);
-    // If initialValue was provided, make sure we update storage.
-    if (!value && !alreadyEqual(value, initialValue)) {
-      this.setStorage(this.storage, this.key, this.value);
-    }
+    this.setStorage = setStorage(serialize).bind(this);
+    this.getStorage = getStorage(serialize, initialValue).bind(this);
+
     // Ensure storage events are handled while bound to this.
     this.handleStorage = this.handleStorage.bind(this);
   }
 
-  set = (value: T | undefined = undefined): void => {
+  setValue(value: T) {
     super.setValue(value);
-    this.setStorage(this.storage, this.key, this.value);
+    this.setStorage(this.storage, this.key, this.value as T);
   }
 
   clear = () => {
-    this.setValue(undefined);
+    this.value = undefined;
     this.storage.removeItem(String(this.key));
+    this.emitChange();
   }
 
   subscribe(listener: () => void): () => void {
     if (this.listeners.length === 0) {
-      globalThis.addEventListener('storage', this.handleStorage);
+      global.addEventListener("storage", this.handleStorage);
     }
     this.listeners = [...this.listeners, listener];
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
       if (this.listeners.length === 0) {
-        globalThis.removeEventListener('storage', this.handleStorage);
+        global.removeEventListener("storage", this.handleStorage);
       }
     }
   }
@@ -82,33 +101,8 @@ export class ExternalStoreStorage<T> extends ExternalStore<T | undefined> {
    * @param event StorageEvent
    */
   handleStorage(event: StorageEvent) {
-    if (
-      this.key === event.key &&
-      this.storage === event.storageArea
-    ) {
-      this.value = this.getStorage(this.storage, this.key);
-      this.emitChange();
+    if (this.key === event.key) {
+      this.setValue(this.getStorage(this.storage, this.key));
     }
   }
 }
-
-export class ExternalStoreStorageLocal<T> extends ExternalStoreStorage<T> {
-  constructor(key: string, initialValue: T) {
-    super(globalThis.localStorage, key, initialValue);
-  }
-}
-
-export class ExternalStoreStorageSession<T> extends ExternalStoreStorage<T> {
-  constructor(key: string, initialValue: T) {
-    super(globalThis.sessionStorage, key, initialValue);
-  }
-}
-
-// type MyValue = { a: number, b: string };
-
-// const myStore = new ExternalStoreStorage<MyValue>(localStorage, 'my_key', { a: 1, b: '' });
-// const myLocalStore = new ExternalStoreStorageLocal<MyValue>('my_local_key', { a: 1, b: '' });
-// const mySessionStore = new ExternalStoreStorageSession<MyValue>('my_session_key', { a: 1, b: '' });
-// const simpleStringStore = new ExternalStoreStorageLocal<string>('ss', '');
-// simpleStringStore.set('dfsafdsfasdfasdf');
-// simpleStringStore.clear()

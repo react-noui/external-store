@@ -1,7 +1,8 @@
+import { ExternalStoreRegExp } from "../../stores/ExternalStoreRegExp";
 import { makeExternalStoreRegExp } from "../makeExternalStoreRegExp"
 
 describe("makeExternalStoreRegExp", () => {
 	test("factory", () => {
-		expect(true).toBe(true);
+		expect(makeExternalStoreRegExp("").store).toBeInstanceOf(ExternalStoreRegExp);
 	});
 });
