@@ -1,0 +1,14 @@
+coverage/
+docs/
+scripts/
+src/
+.yarn*
+
+.gitignore
+.nvmrc
+babel.config.json
+jest.config.js
+jest.setup.js
+tsconfig.*
+
+*.tgz
