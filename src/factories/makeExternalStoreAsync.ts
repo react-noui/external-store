@@ -5,7 +5,6 @@ import { AsyncReturnType } from "../utils/memoize";
 /**
  * 
  * @param promise Any promise that returns a value.
- * @param uniqueIdentifier 
  * @returns 
  */
 export function makeExternalStoreAsync<

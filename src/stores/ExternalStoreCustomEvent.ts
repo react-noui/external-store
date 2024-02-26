@@ -1,14 +1,5 @@
 import { ExternalStore } from "./ExternalStore";
 
-export type TExternalStoreCustomEvent<TType = string, TDetail = unknown> = {
-  type: TType;
-  detail: TDetail;
-};
-
-export type TExternalStoreCustomEventMap<Events extends TExternalStoreCustomEvent<string, unknown>> = {
-  [E in Events as E["type"]]: E;
-}
-
 export class ExternalStoreCustomEvent<T> extends ExternalStore<T> {
   declare eventType: string;
   declare autoListen: boolean;

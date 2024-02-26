@@ -3,7 +3,7 @@ import { syncExternalStore } from "./syncExternalStore";
 
 export function makeExternalStoreWebSocket(
   url: string,
-  defaultValue: string[] = [],
+  defaultValue: string = "",
 ) {
   const store = new ExternalStoreWebSocket(url, defaultValue);
   const { useValue: _useValue, ...sync } = syncExternalStore(store);

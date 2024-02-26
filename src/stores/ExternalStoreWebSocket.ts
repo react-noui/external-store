@@ -1,10 +1,11 @@
+import { ExternalStore } from "./ExternalStore";
 import { ExternalStoreArray } from "./ExternalStoreArray";
 
-export class ExternalStoreWebSocket extends ExternalStoreArray<string> {
+export class ExternalStoreWebSocket extends ExternalStore<string | BinaryData> {
   socket?: WebSocket;
   url: string;
 
-  constructor(url: string, defaultValue: string[]) {
+  constructor(url: string, defaultValue: string | BinaryData) {
     super(defaultValue);
     this.url = url;
     this.send = this.send.bind(this);
@@ -12,7 +13,8 @@ export class ExternalStoreWebSocket extends ExternalStoreArray<string> {
   }
 
   handleMessage(event: MessageEvent) {
-    this.push(event.data);
+    console.log("EVENT", event);
+    this.setValue(event.data);
   }
 
   openSocket() {
@@ -38,7 +40,7 @@ export class ExternalStoreWebSocket extends ExternalStoreArray<string> {
   subscribe(listener: () => void): () => void {
     if (this.listeners.length === 0) {
       this.openSocket().then(() => {
-        this.socket!.addEventListener("message", this.handleMessage)
+        this.socket!.addEventListener("message", this.handleMessage);
       });
     }
     const unmount = super.subscribe(listener);
